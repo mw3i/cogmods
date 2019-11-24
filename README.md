@@ -1,7 +1,9 @@
-# CogMods: Hand Coded Cognitive Psychology Models in Python 
+# Cognitive Psychology Models in Python 
 
 ## Dependencies
 - numpy
+- scipy (sometimes)
+- matplotlib (sometimes for plotting)
 
 ---
 
@@ -30,17 +32,10 @@
 - models to add:
     - SUSTAIN
     - COVIS
-    - ...
-
-- verification needed:
-    - GCM & Prototype model seem like they're running correctly, but should be verified
-    - ALCOVE needs to be verified; should review Nolan Conaway's implementation, CatLearnR implementation, as well as the original paper
-    - DIVA, Autoencoder, MLC are verified against AutoGrad (automatic differentiation tool by HIPS @ Harvard), to the best of my knowledge
+    - RATIONAL (RMC)
 
 ---
 
 ## Misc
-- most of this is written by me (matt wetzel), with heavy influence from (like, sometimes blatantly copying off of :) ) [Nolan Conaway](https://nolanbconaway.github.io/)
-    - plus a host of other resources
 - feel free to email if there are bugs/issues/problems/etc
     - or flag the issue on github
