@@ -51,6 +51,8 @@ def forward(model, inputs, exemplars, c, r):
         (-c) * distances
     )
 
+    print(hidden_activation)
+    exit()
     # class predictions (luce-choiced)
     output_activation = np.matmul(
             hidden_activation,
@@ -214,6 +216,10 @@ if __name__ == '__main__':
         len(categories),
     )
 
+    p = forward(params, inputs, exemplars, hps['c'], hps['r'])[-1]
+    print(p)
+    exit() 
+
     num_training_epochs = 16
 
     params = fit(
@@ -228,6 +234,3 @@ if __name__ == '__main__':
         training_epochs = num_training_epochs,
         randomize_presentation = False
     )
-
-    p = predict(params, inputs, exemplars, hps['c'], hps['r'])
-    print(p)

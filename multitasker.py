@@ -1,5 +1,8 @@
 '''
-Autoencoder
+Multitasker:
+    ~ basically just an combination of an MLP & Autoencoder
+        ~ or an autoencoder that tries to predict the category label as if it were just another feature
+    ~ nothing really special, just a simpler version of an idea that was being tossed around in the lab
 - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 --- Functions ---
@@ -13,7 +16,7 @@ Autoencoder
 
 --- Notes ---
     - implements sum-squared-error cost function
-    - hidden activation function & derivative have to be provided in 'hps' dictionary (there are some available in the utils.py script)
+    - hidden activation function & derivative have to be provided in 'hps' dictionary (there are some examples available in the utils.py script)
 '''
 
 ## external requirements
@@ -129,7 +132,7 @@ def loss_grad(params, inputs, hps, targets = None):
 
 
 ## build parameter dictionary
-def build_params(num_features, num_hidden_nodes, weight_range = [-.1, .1]):
+def build_params(num_features, num_hidden_nodes, num_categories, weight_range = [-.1, .1]):
     '''
     num_features <-- (numeric) number of feature in the dataset
     num_hidden_nodes <-- (numeric)
@@ -144,13 +147,13 @@ def build_params(num_features, num_hidden_nodes, weight_range = [-.1, .1]):
         },
         'hidden': {
             'output': {
-                'weights': np.random.uniform(*weight_range, [num_hidden_nodes, num_features]),
-                'bias': np.random.uniform(*weight_range, [1, num_features]),
+                'weights': np.random.uniform(*weight_range, [num_hidden_nodes, num_features+num_categories]),
+                'bias': np.random.uniform(*weight_range, [1, num_features+num_categories]),
             }
         }
     }
 
-def build_params_xavier(num_features, num_hidden_nodes):
+def build_params_xavier(num_features, num_hidden_nodes, num_categories):
     '''
     num_features <-- (numeric) number of feature in the dataset
     num_hidden_nodes <-- (numeric)
@@ -165,8 +168,8 @@ def build_params_xavier(num_features, num_hidden_nodes):
         },
         'hidden': {
             'output': {
-                'weights': np.random.normal(0, 1, [num_hidden_nodes, num_features]) * np.sqrt(2 / (num_hidden_nodes + num_features)),
-                'bias': np.zeros([1, num_features]),
+                'weights': np.random.normal(0, 1, [num_hidden_nodes, num_features+num_categories]) * np.sqrt(2 / (num_hidden_nodes + num_features + num_categories)),
+                'bias': np.zeros([1, num_features+num_categories]),
             }
         }
     }
@@ -217,29 +220,45 @@ if __name__ == '__main__':
         [0, 1, 1],
     ])
 
+    labels = [0,0,0,0,1,1,1,1]
+
+    categories = np.unique(labels)
+    idx_map = {category: idx for category, idx in zip(categories, range(len(categories)))}
+    labels_indexed = [idx_map[label] for label in labels]
+    one_hot_targets = np.eye(len(categories))[labels_indexed]
+
+
     sigmoid = lambda x:  1 / (1 + np.exp(-x))
     sigmoid_deriv = lambda x:  sigmoid(x) * (1 - sigmoid(x))
 
     hps = {
-        'learning_rate': .05,  # <-- learning rate
+        'learning_rate': 2.55,  # <-- learning rate
         'weight_range': [-3, 3],  # <-- weight range
         'num_hidden_nodes': 4,
 
         'hidden_activation': sigmoid,
         'hidden_activation_deriv': sigmoid_deriv,
 
-        'output_activation': lambda x: x, # <-- linear output function
-        'output_activation_deriv': lambda x: 1, # <-- derivative of linear output function
+        # 'output_activation': lambda x: x, # <-- linear output function
+        # 'output_activation_deriv': lambda x: 1, # <-- derivative of linear output function
+        'output_activation': sigmoid,
+        'output_activation_deriv': sigmoid_deriv,
     }
 
     params = build_params(
         inputs.shape[1],  # <-- num features
         hps['num_hidden_nodes'],
+        len(categories),
         weight_range = hps['weight_range']
     )
 
-    num_training_epochs = 1000
-    params = fit(params, inputs, hps, targets = inputs, training_epochs = num_training_epochs)
+    targets = np.concatenate([
+        inputs,
+        one_hot_targets,
+    ], axis = 1)
+
+    num_training_epochs = 10
+    params = fit(params, inputs, hps, targets = targets, training_epochs = num_training_epochs)
     p = forward(params, inputs, hps)[-1]
-    print(p)
+    print(p[:,0].round())
 
