@@ -51,23 +51,24 @@ def forward(model, inputs, exemplars, c, r):
         (-c) * distances
     )
 
-    print(hidden_activation)
-    exit()
     # class predictions (luce-choiced)
     output_activation = np.matmul(
             hidden_activation,
             params['association_weights']
-        ).clip(-1.,1.) # <-- clip == humble teachers (Krushke, 1992)
+        )
 
     return [hidden_activation, output_activation]
 
 
 ## sum squared error loss function
 def loss(params, inputs, exemplars, c, r, targets):
+    activations = forward(params, inputs, exemplars, c, r)[-1]
+    activations = np.array([[.5,-10.]])
+
     return .5 * np.sum(
         np.square(
             np.subtract(
-                forward(params, inputs, exemplars, c, r)[-1],
+                activations,
                 targets
             )
         )
@@ -78,6 +79,8 @@ def loss(params, inputs, exemplars, c, r, targets):
 def loss_grad(params, inputs, exemplars, c, r, targets):
 
     hidden_activation, output_activation = forward(params, inputs, exemplars, c, r)    
+    
+    targets = (output_activation * targets).clip(1) * targets # <-- humble teacher principle (performs max(1,t) func on correct category labels, and min(-1,t) on incorrect channels)
 
     association_gradients = (targets - output_activation).T * hidden_activation # <-- this makes sense for the most part
 
@@ -191,8 +194,8 @@ if __name__ == '__main__':
     exemplars = inputs
 
     labels = [
-        # 'A','A','A','A', 'B','B','B','B', # <-- type 1
-        'A','A','B','B', 'B','B','A','A', # <-- type 2
+        'A','A','A','A', 'B','B','B','B', # <-- type 1
+        # 'A','A','B','B', 'B','B','A','A', # <-- type 2
         # 'A','A','A','B', 'B','B','B','A', # <-- type 4
         # 'B','A','A','B', 'A','B','B','A', # <-- type 6
     ]
@@ -216,11 +219,9 @@ if __name__ == '__main__':
         len(categories),
     )
 
-    p = forward(params, inputs, exemplars, hps['c'], hps['r'])[-1]
-    print(p)
-    exit() 
+    # p = forward(params, inputs, exemplars, hps['c'], hps['r'])[-1]
 
-    num_training_epochs = 16
+    num_training_epochs = 10
 
     params = fit(
         params, 
@@ -234,3 +235,6 @@ if __name__ == '__main__':
         training_epochs = num_training_epochs,
         randomize_presentation = False
     )
+
+    p = forward(params, inputs, exemplars, hps['c'], hps['r'])[-1]
+    print(p)
