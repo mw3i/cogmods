@@ -63,7 +63,6 @@ def forward(model, inputs, exemplars, c, r):
 ## sum squared error loss function
 def loss(params, inputs, exemplars, c, r, targets):
     activations = forward(params, inputs, exemplars, c, r)[-1]
-    activations = np.array([[.5,-10.]])
 
     return .5 * np.sum(
         np.square(
